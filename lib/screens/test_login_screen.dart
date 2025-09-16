@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
-import 'onboarding_screen.dart';
-import '../main.dart';
+import 'home_screen.dart';
 
 class TestLoginScreen extends StatefulWidget {
   const TestLoginScreen({super.key});
@@ -13,10 +12,10 @@ class TestLoginScreen extends StatefulWidget {
 
 class _TestLoginScreenState extends State<TestLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _kakaoIdController = TextEditingController();
-  final _nicknameController = TextEditingController();
-  final _phoneNumberController = TextEditingController();
-  final _birthDateController = TextEditingController();
+  final _kakaoIdController = TextEditingController(text: 'test_user_123');
+  final _nicknameController = TextEditingController(text: '개척청년');
+  final _phoneNumberController = TextEditingController(text: '01012345678');
+  final _birthDateController = TextEditingController(text: '1995-01-15');
 
   String _selectedGender = 'MALE';
   bool _isLoading = false;
@@ -73,19 +72,11 @@ class _TestLoginScreenState extends State<TestLoginScreen> {
       );
 
       if (loginResponse != null) {
-        if (loginResponse.isNewUser) {
-          // 신규 회원 - 온보딩 화면으로 이동
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-          );
-        } else {
-          // 기존 회원 - 메인 페이지로 이동
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainPage()),
-          );
-        }
+        // 홈 화면으로 이동
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
       } else {
         // 로그인 실패
         ScaffoldMessenger.of(context).showSnackBar(

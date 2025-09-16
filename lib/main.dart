@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'services/auth_service.dart';
-import 'screens/onboarding_screen.dart';
 import 'screens/test_login_screen.dart';
 
 void main() {
@@ -20,10 +19,21 @@ class MyApp extends StatelessWidget {
       title: '개척교회 청년들',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF87CEEB), // 하늘색
+          seedColor: Colors.white,
           brightness: Brightness.light,
         ),
         useMaterial3: true,
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          iconTheme: IconThemeData(color: Color(0xFF87CEEB)),
+          titleTextStyle: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       home: const LoginScreen(),
     );
@@ -52,22 +62,13 @@ class _LoginScreenState extends State<LoginScreen> {
       print('[UI] AuthService.loginWithKakao() 응답 받음: $loginResponse');
 
       if (loginResponse != null) {
-        print('[UI] 로그인 성공! isNewUser: ${loginResponse.isNewUser}');
-        if (loginResponse.isNewUser) {
-          print('[UI] 신규 회원 - 온보딩 화면으로 이동');
-          // 신규 회원 - 온보딩 화면으로 이동
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-          );
-        } else {
-          print('[UI] 기존 회원 - 메인 페이지로 이동');
-          // 기존 회원 - 메인 페이지로 이동
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainPage()),
-          );
-        }
+        print('[UI] 로그인 성공!');
+        print('[UI] 메인 페이지로 이동');
+        // 메인 페이지로 이동
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainPage()),
+        );
       } else {
         print('[UI] 로그인 실패 - loginResponse가 null');
         // 로그인 실패
@@ -92,170 +93,162 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFE3F2FD), // 연한 하늘색
-              Color(0xFFBBDEFB), // 중간 하늘색
-              Color(0xFF90CAF9), // 진한 하늘색
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // 앱 로고 영역 (임시로 비워둠)
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.5),
-                        width: 2,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.church,
-                      size: 60,
-                      color: Colors.white,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 60),
+
+                // 앱 로고 영역
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF87CEEB).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: const Color(0xFF87CEEB).withOpacity(0.3),
+                      width: 1,
                     ),
                   ),
-                  const SizedBox(height: 32),
-
-                  // 앱 이름
-                  const Text(
-                    '개척교회 청년들',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 1.2,
-                    ),
+                  child: const Icon(
+                    Icons.church_outlined,
+                    size: 50,
+                    color: Color(0xFF87CEEB),
                   ),
-                  const SizedBox(height: 48),
+                ),
+                const SizedBox(height: 40),
 
-                  // 카카오 로그인 버튼
-                  Container(
-                    width: double.infinity,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleKakaoLogin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFEE500), // 카카오 노란색
-                        foregroundColor: Colors.black,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                // 앱 이름
+                const Text(
+                  '개척교회 청년들',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // 서브타이틀
+                Text(
+                  '함께 성장하는 공동체',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.grey[600],
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                const SizedBox(height: 80),
+
+                // 카카오 로그인 버튼
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _handleKakaoLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF87CEEB),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child:
-                          _isLoading
-                              ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.black,
+                      disabledBackgroundColor: const Color(
+                        0xFF87CEEB,
+                      ).withOpacity(0.6),
+                    ),
+                    child:
+                        _isLoading
+                            ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                            : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.chat_bubble_outline,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  '카카오로 시작하기',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
                                   ),
                                 ),
-                              )
-                              : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  // 카카오 아이콘 (임시로 이모지 사용)
-                                  const Text(
-                                    '💬',
-                                    style: TextStyle(fontSize: 20),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    '카카오로 시작하기',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                    ),
+                              ],
+                            ),
                   ),
-                  const SizedBox(height: 16),
+                ),
+                const SizedBox(height: 16),
 
-                  // 테스트 로그인 버튼
-                  Container(
-                    width: double.infinity,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
+                // 테스트 로그인 버튼
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TestLoginScreen(),
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF87CEEB),
+                      side: const BorderSide(
+                        color: Color(0xFF87CEEB),
+                        width: 2,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.science_outlined,
+                          size: 20,
+                          color: Color(0xFF87CEEB),
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          '테스트 로그인',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF87CEEB),
+                          ),
                         ),
                       ],
                     ),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TestLoginScreen(),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF90CAF9),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                            color: const Color(0xFF90CAF9),
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('🧪', style: TextStyle(fontSize: 20)),
-                          const SizedBox(width: 12),
-                          const Text(
-                            '카카오로 시작하기 (테스트)',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: 40),
+              ],
             ),
           ),
         ),
@@ -270,29 +263,45 @@ class MainPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFE3F2FD), // 연한 하늘색
-              Color(0xFFBBDEFB), // 중간 하늘색
-              Color(0xFF90CAF9), // 진한 하늘색
-            ],
-          ),
-        ),
-        child: const SafeArea(
-          child: Center(
-            child: Text(
-              '로그인 완료',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 1.2,
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('개척교회 청년들'),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+      ),
+      body: const SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.check_circle_outline,
+                size: 80,
+                color: Color(0xFF87CEEB),
               ),
-            ),
+              SizedBox(height: 32),
+              Text(
+                '로그인 완료',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              SizedBox(height: 16),
+              Text(
+                '개척교회 청년들에 오신 것을 환영합니다!',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.grey,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       ),
