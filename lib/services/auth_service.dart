@@ -1,13 +1,18 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
-import '../models/user.dart';
+import '../models/user.dart' as app_models;
+import 'api_client.dart';
 
 class AuthService {
   static const String baseUrl =
       'http://192.168.0.187:3000/api'; // 실제 API 서버 URL로 변경 필요
 
-  static Future<LoginResponse?> loginWithKakao() async {
+  static app_models.LoginResponse? _currentLoginResponse;
+  static app_models.LoginResponse? get currentLoginResponse =>
+      _currentLoginResponse;
+  static app_models.User? get currentUser => _currentLoginResponse?.user;
+
+  static Future<app_models.LoginResponse?> loginWithKakao() async {
     print('[AUTH] 카카오 로그인 시작');
 
     try {
@@ -22,7 +27,7 @@ class AuthService {
       print('[AUTH] 서버에 액세스 토큰 전송 중...');
 
       // 서버에 액세스 토큰 전송
-      final response = await http.post(
+      final response = await ApiClient.post(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'accessToken': token.accessToken}),
@@ -37,7 +42,8 @@ class AuthService {
         final Map<String, dynamic> data = jsonDecode(response.body);
         print('[AUTH] JSON 파싱 성공: $data');
 
-        final loginResponse = LoginResponse.fromJson(data);
+        final loginResponse = app_models.LoginResponse.fromJson(data);
+        _currentLoginResponse = loginResponse;
         print(
           '[AUTH] LoginResponse 객체 생성 성공: isNewUser=${loginResponse.isNewUser}',
         );
@@ -53,7 +59,7 @@ class AuthService {
     }
   }
 
-  static Future<LoginResponse?> loginWithKakaoTest({
+  static Future<app_models.LoginResponse?> loginWithKakaoTest({
     required String kakaoId,
     String? gender,
     String? birthDate,
@@ -77,7 +83,7 @@ class AuthService {
       print('[AUTH] 테스트 서버에 데이터 전송 중: $requestData');
 
       // 서버에 테스트 데이터 전송
-      final response = await http.post(
+      final response = await ApiClient.post(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(requestData),
@@ -92,7 +98,8 @@ class AuthService {
         final Map<String, dynamic> data = jsonDecode(response.body);
         print('[AUTH] JSON 파싱 성공: $data');
 
-        final loginResponse = LoginResponse.fromJson(data);
+        final loginResponse = app_models.LoginResponse.fromJson(data);
+        _currentLoginResponse = loginResponse;
         print(
           '[AUTH] LoginResponse 객체 생성 성공: isNewUser=${loginResponse.isNewUser}',
         );
