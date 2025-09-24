@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
+import 'config/app_config.dart';
 import 'services/auth_service.dart';
 import 'screens/test_login_screen.dart';
 
@@ -7,6 +8,8 @@ void main() {
   KakaoSdk.init(
     nativeAppKey: '72eedb68121a9d2013a7682e57c06457', // 실제 카카오 네이티브 앱 키로 변경 필요
   );
+  print('[CONFIG] APP_ENV: ${AppConfig.environment.name}');
+  print('[CONFIG] API_BASE_URL: ${AppConfig.apiBaseUrl}');
   runApp(const MyApp());
 }
 

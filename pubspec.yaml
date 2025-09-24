@@ -41,6 +41,9 @@ dependencies:
   # HTTP 요청
   http: ^1.1.0
   
+  # 이미지 선택
+  image_picker: ^1.0.7
+  
   # JSON 직렬화
   json_annotation: ^4.8.1
 

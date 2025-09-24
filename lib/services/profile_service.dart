@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+
 import '../models/user_profile.dart';
 import 'auth_service.dart';
 import 'api_client.dart';
@@ -73,8 +76,45 @@ class ProfileService {
     );
   }
 
-  static Map<String, String> _buildHeaders() {
-    final headers = <String, String>{'Content-Type': 'application/json'};
+  static Future<UserProfile> uploadProfilePhoto({
+    required List<int> bytes,
+    required String fileName,
+    String? mimeType,
+  }) async {
+    final uri = Uri.parse('${AuthService.baseUrl}$_profilePath/photo/upload');
+
+    final multipartFile = http.MultipartFile.fromBytes(
+      'file',
+      bytes,
+      filename: fileName,
+      contentType: mimeType != null ? MediaType.parse(mimeType) : null,
+    );
+
+    final response = await ApiClient.postMultipart(
+      uri,
+      headers: _buildHeaders(includeJsonContentType: false),
+      files: [multipartFile],
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final dynamic decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        return UserProfile.fromJson(decoded);
+      }
+
+      throw Exception('Unexpected profile response format: ${response.body}');
+    }
+
+    throw Exception(
+      'Failed to upload profile photo (${response.statusCode}): ${response.body}',
+    );
+  }
+
+  static Map<String, String> _buildHeaders({bool includeJsonContentType = true}) {
+    final headers = <String, String>{};
+    if (includeJsonContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
     final token = AuthService.currentLoginResponse?.accessToken;
     if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';

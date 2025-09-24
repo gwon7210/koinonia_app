@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../models/user_profile.dart';
 import '../services/auth_service.dart';
@@ -16,11 +19,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isEditing = false;
   bool _isLoading = false;
   bool _isSaving = false;
+  bool _isUploadingPhoto = false;
   String? _error;
+  Uint8List? _localProfileImageBytes;
 
   late TextEditingController _introductionController;
   late TextEditingController _idealTypeController;
   late TextEditingController _mbitController;
+
+  String? get _profileImageUrl {
+    final path = _profile?.profileImagePath;
+    if (path == null || path.isEmpty) {
+      return null;
+    }
+    return AuthService.resolveAssetUrl(path);
+  }
 
   @override
   void initState() {
@@ -62,6 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _profile = nextProfile;
         _isEditing = false;
+        _localProfileImageBytes = null;
       });
       _applyProfileToControllers(nextProfile);
     } catch (error) {
@@ -118,6 +132,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _profile = profile;
         _isEditing = false;
+        _localProfileImageBytes = null;
       });
       _applyProfileToControllers(profile);
 
@@ -138,6 +153,89 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isSaving = false;
       });
     }
+  }
+
+  Future<void> _pickProfileImage() async {
+    if (_isUploadingPhoto || _isLoading) {
+      return;
+    }
+
+    final user = AuthService.currentUser;
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('로그인 정보가 없어 프로필 사진을 변경할 수 없습니다.')),
+        );
+      }
+      return;
+    }
+
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1280,
+        imageQuality: 85,
+      );
+
+      if (picked == null) {
+        return;
+      }
+
+      final bytes = await picked.readAsBytes();
+      if (!mounted) return;
+
+      setState(() {
+        _isUploadingPhoto = true;
+        _localProfileImageBytes = bytes;
+      });
+
+      final profile = await ProfileService.uploadProfilePhoto(
+        bytes: bytes,
+        fileName: picked.name,
+        mimeType: _inferMimeType(picked.name),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _profile = profile;
+        _localProfileImageBytes = null;
+      });
+
+      if (!_isEditing) {
+        _applyProfileToControllers(profile);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('프로필 사진이 업데이트되었습니다!'),
+          backgroundColor: Color(0xFF87CEEB),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('프로필 사진을 변경하지 못했습니다: $error')),
+      );
+      setState(() {
+        _localProfileImageBytes = null;
+      });
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isUploadingPhoto = false;
+      });
+    }
+  }
+
+  String? _inferMimeType(String fileName) {
+    final lower = fileName.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    if (lower.endsWith('.gif')) return 'image/gif';
+    if (lower.endsWith('.heic')) return 'image/heic';
+    return 'image/jpeg';
   }
 
   @override
@@ -310,15 +408,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Row(
         children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(40),
-              color: const Color(0xFF87CEEB).withOpacity(0.2),
-            ),
-            child: const Icon(Icons.person, color: Color(0xFF87CEEB), size: 40),
-          ),
+          _buildProfileImageAvatar(),
           const SizedBox(width: 20),
           Expanded(
             child: Column(
@@ -345,6 +435,108 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProfileImageAvatar() {
+    final borderRadius = BorderRadius.circular(40);
+    Widget avatarContent;
+
+    if (_localProfileImageBytes != null) {
+      avatarContent = Image.memory(
+        _localProfileImageBytes!,
+        fit: BoxFit.cover,
+      );
+    } else {
+      final imageUrl = _profileImageUrl;
+      if (imageUrl != null) {
+        avatarContent = Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildAvatarPlaceholder(),
+        );
+      } else {
+        avatarContent = _buildAvatarPlaceholder();
+      }
+    }
+
+    return GestureDetector(
+      onTap: _isUploadingPhoto ? null : _pickProfileImage,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              borderRadius: borderRadius,
+              color: const Color(0xFF87CEEB).withOpacity(0.2),
+            ),
+          ),
+          ClipRRect(
+            borderRadius: borderRadius,
+            child: SizedBox(
+              width: 80,
+              height: 80,
+              child: avatarContent,
+            ),
+          ),
+          Positioned(
+            bottom: 4,
+            right: 4,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.camera_alt_outlined,
+                size: 16,
+                color: _isUploadingPhoto
+                    ? Colors.grey
+                    : const Color(0xFF87CEEB),
+              ),
+            ),
+          ),
+          if (_isUploadingPhoto)
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                borderRadius: borderRadius,
+                color: Colors.black.withOpacity(0.35),
+              ),
+              child: const Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarPlaceholder() {
+    return const Center(
+      child: Icon(
+        Icons.person,
+        color: Color(0xFF87CEEB),
+        size: 40,
       ),
     );
   }

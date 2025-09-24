@@ -1,16 +1,35 @@
 import 'dart:convert';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
+
+import '../config/app_config.dart';
 import '../models/user.dart' as app_models;
 import 'api_client.dart';
 
 class AuthService {
-  static const String baseUrl =
-      'http://192.168.0.187:3000/api'; // 실제 API 서버 URL로 변경 필요
+  static String get baseUrl => AppConfig.apiBaseUrl;
 
   static app_models.LoginResponse? _currentLoginResponse;
   static app_models.LoginResponse? get currentLoginResponse =>
       _currentLoginResponse;
   static app_models.User? get currentUser => _currentLoginResponse?.user;
+
+  static String get baseOrigin {
+    final uri = Uri.parse(baseUrl);
+    final buffer = StringBuffer()..write('${uri.scheme}://${uri.host}');
+    final isDefaultPort =
+        (uri.scheme == 'http' && uri.port == 80) ||
+        (uri.scheme == 'https' && uri.port == 443);
+    if (uri.hasPort && !isDefaultPort) {
+      buffer.write(':${uri.port}');
+    }
+    return buffer.toString();
+  }
+
+  static String resolveAssetUrl(String relativePath) {
+    final sanitized =
+        relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+    return '$baseOrigin/$sanitized';
+  }
 
   static Future<app_models.LoginResponse?> loginWithKakao() async {
     print('[AUTH] 카카오 로그인 시작');
