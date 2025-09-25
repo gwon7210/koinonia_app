@@ -21,6 +21,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _error;
   Uint8List? _localProfileImageBytes;
 
+  static const List<String> _mbtiOptions = [
+    'ISTJ', 'ISFJ', 'INFJ', 'INTJ',
+    'ISTP', 'ISFP', 'INFP', 'INTP',
+    'ESTP', 'ESFP', 'ENFP', 'ENTP',
+    'ESTJ', 'ESFJ', 'ENFJ', 'ENTJ',
+  ];
+
   bool _editingSelfIntroduction = false;
   bool _savingSelfIntroduction = false;
   bool _editingIdealType = false;
@@ -29,6 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _savingFaithConfession = false;
   bool _editingMbit = false;
   bool _savingMbit = false;
+  String? _mbitEditingValue;
 
   late TextEditingController _introductionController;
   late TextEditingController _idealTypeController;
@@ -50,6 +58,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _idealTypeController = TextEditingController();
     _mbitController = TextEditingController();
     _faithConfessionController = TextEditingController();
+    _mbitEditingValue = null;
     _loadProfile();
   }
 
@@ -104,7 +113,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _applyProfileToControllers(UserProfile? profile) {
     _introductionController.text = profile?.selfIntroduction ?? '';
     _idealTypeController.text = profile?.idealType ?? '';
-    _mbitController.text = profile?.mbit ?? '';
+    final normalizedMbit = _normalizeMbit(profile?.mbit);
+    _mbitController.text = normalizedMbit ?? profile?.mbit ?? '';
     _faithConfessionController.text = profile?.faithConfession ?? '';
   }
 
@@ -119,7 +129,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _faithConfessionController.text = profile.faithConfession ?? '';
     }
     if (!_editingMbit) {
-      _mbitController.text = profile.mbit ?? '';
+      final normalizedMbit = _normalizeMbit(profile.mbit);
+      _mbitController.text = normalizedMbit ?? profile.mbit ?? '';
     }
   }
 
@@ -132,6 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _savingFaithConfession = false;
     _editingMbit = false;
     _savingMbit = false;
+    _mbitEditingValue = null;
   }
 
   void _startEditingSelfIntroduction() {
@@ -272,27 +284,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _startEditingMbit() {
     setState(() {
       _editingMbit = true;
-      _mbitController.text = _profile?.mbit ?? '';
+      _mbitEditingValue = _normalizeMbit(_profile?.mbit);
     });
   }
 
   void _cancelEditingMbit() {
     setState(() {
       _editingMbit = false;
+      _mbitEditingValue = _normalizeMbit(_profile?.mbit);
       _mbitController.text = _profile?.mbit ?? '';
     });
   }
 
   Future<void> _saveMbit() async {
     if (_savingMbit) return;
+    final selected = _mbitEditingValue;
+    if (selected == null || selected.isEmpty) {
+      _showSnackBar('MBTI를 선택해주세요.', isError: true);
+      return;
+    }
     setState(() {
       _savingMbit = true;
     });
 
     try {
-      final updated = await ProfileService.updateMbit(
-        _mbitController.text.trim(),
-      );
+      final updated = await ProfileService.updateMbit(selected);
 
       if (!mounted) return;
 
@@ -300,6 +316,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _profile = updated;
         _localProfileImageBytes = null;
         _editingMbit = false;
+        _mbitEditingValue = null;
       });
       _syncControllersAfterUpdate(updated);
       _showSnackBar('MBTI가 업데이트되었습니다!');
@@ -386,7 +403,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _showSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) {
+      return;
+    }
+    messenger.showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: isError ? Colors.redAccent : const Color(0xFF87CEEB),
@@ -501,6 +522,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onEdit: _startEditingMbit,
                     onCancel: _cancelEditingMbit,
                     onSave: _saveMbit,
+                    editingChild: _buildMbitEditor(),
+                    viewChild: _buildMbitView(),
                   ),
                 ],
               ),
@@ -650,6 +673,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  String? _normalizeMbit(String? value) {
+    if (value == null) return null;
+    final normalized = value.trim().toUpperCase();
+    return _mbtiOptions.contains(normalized) ? normalized : null;
+  }
+
+  Widget _buildMbitEditor() {
+    final selected = _mbitEditingValue;
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _mbtiOptions
+          .map(
+            (value) => ChoiceChip(
+              label: Text(value),
+              selected: value == selected,
+              onSelected:
+                  _savingMbit
+                      ? null
+                      : (isSelected) {
+                          if (!isSelected) return;
+                          setState(() {
+                            _mbitEditingValue = value;
+                            _mbitController.text = value;
+                          });
+                        },
+              selectedColor: const Color(0xFF87CEEB),
+              labelStyle: TextStyle(
+                color: value == selected ? Colors.white : Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  Widget _buildMbitView() {
+    final normalized = _normalizeMbit(_profile?.mbit ?? _mbitController.text);
+    if (normalized == null) {
+      return const Text(
+        '등록된 정보가 없습니다.',
+        style: TextStyle(color: Colors.grey, fontSize: 15, fontWeight: FontWeight.w400),
+      );
+    }
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Chip(
+        label: Text(
+          normalized,
+          style: const TextStyle(
+            color: Color(0xFF0F4C75),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        backgroundColor: const Color(0xFF87CEEB).withOpacity(0.15),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      ),
+    );
+  }
+
   Widget _buildEditableSection({
     required String title,
     required IconData icon,
@@ -660,6 +744,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required VoidCallback onEdit,
     required VoidCallback onCancel,
     required Future<void> Function() onSave,
+    Widget? editingChild,
+    Widget? viewChild,
   }) {
     final hasContent = controller.text.trim().isNotEmpty;
 
@@ -775,41 +861,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 16),
           if (isEditing)
-            TextField(
-              controller: controller,
-              maxLines: isMultiline ? 5 : 1,
-              decoration: InputDecoration(
-                hintText: '${title}을 입력해주세요',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF87CEEB),
-                    width: 1,
+            editingChild ??
+                TextField(
+                  controller: controller,
+                  maxLines: isMultiline ? 5 : 1,
+                  decoration: InputDecoration(
+                    hintText: '${title}을 입력해주세요',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF87CEEB),
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF87CEEB),
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.all(12),
                   ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF87CEEB),
-                    width: 2,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.all(12),
-              ),
             )
           else
-            Text(
-              hasContent ? controller.text : '등록된 정보가 없습니다.',
-              style: TextStyle(
-                fontSize: isMultiline ? 15 : 18,
-                color: hasContent ? Colors.black87 : Colors.grey,
-                height: isMultiline ? 1.6 : 1.2,
-                fontWeight:
-                    hasContent
-                        ? (isMultiline ? FontWeight.w400 : FontWeight.w600)
-                        : FontWeight.w400,
-              ),
-            ),
+            viewChild ??
+                Text(
+                  hasContent ? controller.text : '등록된 정보가 없습니다.',
+                  style: TextStyle(
+                    fontSize: isMultiline ? 15 : 18,
+                    color: hasContent ? Colors.black87 : Colors.grey,
+                    height: isMultiline ? 1.6 : 1.2,
+                    fontWeight:
+                        hasContent
+                            ? (isMultiline ? FontWeight.w400 : FontWeight.w600)
+                            : FontWeight.w400,
+                  ),
+                ),
         ],
       ),
     );
