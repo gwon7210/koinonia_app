@@ -5,6 +5,7 @@ class UserProfile {
   final String? mbit;
   final String? idealType;
   final String? profileImagePath;
+  final String? faithConfession;
 
   const UserProfile({
     this.id,
@@ -13,6 +14,7 @@ class UserProfile {
     this.mbit,
     this.idealType,
     this.profileImagePath,
+    this.faithConfession,
   });
 
   UserProfile copyWith({
@@ -20,6 +22,7 @@ class UserProfile {
     String? mbit,
     String? idealType,
     String? profileImagePath,
+    String? faithConfession,
   }) {
     return UserProfile(
       id: id,
@@ -28,6 +31,7 @@ class UserProfile {
       mbit: mbit ?? this.mbit,
       idealType: idealType ?? this.idealType,
       profileImagePath: profileImagePath ?? this.profileImagePath,
+      faithConfession: faithConfession ?? this.faithConfession,
     );
   }
 
@@ -39,6 +43,7 @@ class UserProfile {
       mbit: json['mbit'] as String?,
       idealType: json['idealType'] as String?,
       profileImagePath: json['profileImagePath'] as String?,
+      faithConfession: json['faithConfession'] as String?,
     );
   }
 
@@ -49,6 +54,7 @@ class UserProfile {
       if (mbit != null) 'mbit': mbit,
       if (idealType != null) 'idealType': idealType,
       if (profileImagePath != null) 'profileImagePath': profileImagePath,
+      if (faithConfession != null) 'faithConfession': faithConfession,
     };
   }
 }

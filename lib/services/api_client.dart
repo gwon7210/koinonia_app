@@ -23,6 +23,15 @@ class ApiClient {
     return _send('POST', uri, headers: headers, body: body, encoding: encoding);
   }
 
+  static Future<http.Response> patch(
+    Uri uri, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+  }) async {
+    return _send('PATCH', uri, headers: headers, body: body, encoding: encoding);
+  }
+
   static Future<http.Response> postMultipart(
     Uri uri, {
     Map<String, String>? headers,
@@ -90,6 +99,13 @@ class ApiClient {
         response = await _client.get(uri, headers: headers);
       } else if (method == 'POST') {
         response = await _client.post(
+          uri,
+          headers: headers,
+          body: body,
+          encoding: encoding,
+        );
+      } else if (method == 'PATCH') {
+        response = await _client.patch(
           uri,
           headers: headers,
           body: body,

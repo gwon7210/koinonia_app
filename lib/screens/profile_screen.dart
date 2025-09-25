@@ -16,16 +16,24 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   UserProfile? _profile;
-  bool _isEditing = false;
   bool _isLoading = false;
-  bool _isSaving = false;
   bool _isUploadingPhoto = false;
   String? _error;
   Uint8List? _localProfileImageBytes;
 
+  bool _editingSelfIntroduction = false;
+  bool _savingSelfIntroduction = false;
+  bool _editingIdealType = false;
+  bool _savingIdealType = false;
+  bool _editingFaithConfession = false;
+  bool _savingFaithConfession = false;
+  bool _editingMbit = false;
+  bool _savingMbit = false;
+
   late TextEditingController _introductionController;
   late TextEditingController _idealTypeController;
   late TextEditingController _mbitController;
+  late TextEditingController _faithConfessionController;
 
   String? get _profileImageUrl {
     final path = _profile?.profileImagePath;
@@ -41,6 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _introductionController = TextEditingController();
     _idealTypeController = TextEditingController();
     _mbitController = TextEditingController();
+    _faithConfessionController = TextEditingController();
     _loadProfile();
   }
 
@@ -49,6 +58,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _introductionController.dispose();
     _idealTypeController.dispose();
     _mbitController.dispose();
+    _faithConfessionController.dispose();
     super.dispose();
   }
 
@@ -74,8 +84,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final nextProfile = fetched ?? UserProfile(userId: user.id);
       setState(() {
         _profile = nextProfile;
-        _isEditing = false;
         _localProfileImageBytes = null;
+        _resetEditingStates();
       });
       _applyProfileToControllers(nextProfile);
     } catch (error) {
@@ -95,62 +105,211 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _introductionController.text = profile?.selfIntroduction ?? '';
     _idealTypeController.text = profile?.idealType ?? '';
     _mbitController.text = profile?.mbit ?? '';
+    _faithConfessionController.text = profile?.faithConfession ?? '';
   }
 
-  void _toggleEditMode() {
-    if (_isLoading || _isSaving) {
-      return;
+  void _syncControllersAfterUpdate(UserProfile profile) {
+    if (!_editingSelfIntroduction) {
+      _introductionController.text = profile.selfIntroduction ?? '';
     }
+    if (!_editingIdealType) {
+      _idealTypeController.text = profile.idealType ?? '';
+    }
+    if (!_editingFaithConfession) {
+      _faithConfessionController.text = profile.faithConfession ?? '';
+    }
+    if (!_editingMbit) {
+      _mbitController.text = profile.mbit ?? '';
+    }
+  }
 
+  void _resetEditingStates() {
+    _editingSelfIntroduction = false;
+    _savingSelfIntroduction = false;
+    _editingIdealType = false;
+    _savingIdealType = false;
+    _editingFaithConfession = false;
+    _savingFaithConfession = false;
+    _editingMbit = false;
+    _savingMbit = false;
+  }
+
+  void _startEditingSelfIntroduction() {
     setState(() {
-      _isEditing = !_isEditing;
-      if (!_isEditing) {
-        _applyProfileToControllers(_profile);
-      }
+      _editingSelfIntroduction = true;
+      _introductionController.text = _profile?.selfIntroduction ?? '';
     });
   }
 
-  Future<void> _saveChanges() async {
-    final user = AuthService.currentUser;
-    if (user == null || _isSaving) {
-      return;
-    }
-
+  void _cancelEditingSelfIntroduction() {
     setState(() {
-      _isSaving = true;
+      _editingSelfIntroduction = false;
+      _introductionController.text = _profile?.selfIntroduction ?? '';
+    });
+  }
+
+  Future<void> _saveSelfIntroduction() async {
+    if (_savingSelfIntroduction) return;
+    setState(() {
+      _savingSelfIntroduction = true;
     });
 
     try {
-      final profile = await ProfileService.upsertProfile(
-        selfIntroduction: _introductionController.text.trim(),
-        mbit: _mbitController.text.trim(),
-        idealType: _idealTypeController.text.trim(),
+      final updated = await ProfileService.updateSelfIntroduction(
+        _introductionController.text.trim(),
       );
 
       if (!mounted) return;
 
       setState(() {
-        _profile = profile;
-        _isEditing = false;
+        _profile = updated;
         _localProfileImageBytes = null;
+        _editingSelfIntroduction = false;
       });
-      _applyProfileToControllers(profile);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('프로필이 저장되었습니다!'),
-          backgroundColor: Color(0xFF87CEEB),
-        ),
-      );
+      _syncControllersAfterUpdate(updated);
+      _showSnackBar('자기소개가 업데이트되었습니다!');
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('프로필 저장에 실패했습니다: $error')),
-      );
+      _showSnackBar('자기소개 업데이트에 실패했습니다: $error', isError: true);
     } finally {
       if (!mounted) return;
       setState(() {
-        _isSaving = false;
+        _savingSelfIntroduction = false;
+      });
+    }
+  }
+
+  void _startEditingIdealType() {
+    setState(() {
+      _editingIdealType = true;
+      _idealTypeController.text = _profile?.idealType ?? '';
+    });
+  }
+
+  void _cancelEditingIdealType() {
+    setState(() {
+      _editingIdealType = false;
+      _idealTypeController.text = _profile?.idealType ?? '';
+    });
+  }
+
+  Future<void> _saveIdealType() async {
+    if (_savingIdealType) return;
+    setState(() {
+      _savingIdealType = true;
+    });
+
+    try {
+      final updated = await ProfileService.updateIdealType(
+        _idealTypeController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _profile = updated;
+        _localProfileImageBytes = null;
+        _editingIdealType = false;
+      });
+      _syncControllersAfterUpdate(updated);
+      _showSnackBar('이상형이 업데이트되었습니다!');
+    } catch (error) {
+      if (!mounted) return;
+      _showSnackBar('이상형 업데이트에 실패했습니다: $error', isError: true);
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _savingIdealType = false;
+      });
+    }
+  }
+
+  void _startEditingFaithConfession() {
+    setState(() {
+      _editingFaithConfession = true;
+      _faithConfessionController.text = _profile?.faithConfession ?? '';
+    });
+  }
+
+  void _cancelEditingFaithConfession() {
+    setState(() {
+      _editingFaithConfession = false;
+      _faithConfessionController.text = _profile?.faithConfession ?? '';
+    });
+  }
+
+  Future<void> _saveFaithConfession() async {
+    if (_savingFaithConfession) return;
+    setState(() {
+      _savingFaithConfession = true;
+    });
+
+    try {
+      final updated = await ProfileService.updateFaithConfession(
+        _faithConfessionController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _profile = updated;
+        _localProfileImageBytes = null;
+        _editingFaithConfession = false;
+      });
+      _syncControllersAfterUpdate(updated);
+      _showSnackBar('신앙 고백이 업데이트되었습니다!');
+    } catch (error) {
+      if (!mounted) return;
+      _showSnackBar('신앙 고백 업데이트에 실패했습니다: $error', isError: true);
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _savingFaithConfession = false;
+      });
+    }
+  }
+
+  void _startEditingMbit() {
+    setState(() {
+      _editingMbit = true;
+      _mbitController.text = _profile?.mbit ?? '';
+    });
+  }
+
+  void _cancelEditingMbit() {
+    setState(() {
+      _editingMbit = false;
+      _mbitController.text = _profile?.mbit ?? '';
+    });
+  }
+
+  Future<void> _saveMbit() async {
+    if (_savingMbit) return;
+    setState(() {
+      _savingMbit = true;
+    });
+
+    try {
+      final updated = await ProfileService.updateMbit(
+        _mbitController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _profile = updated;
+        _localProfileImageBytes = null;
+        _editingMbit = false;
+      });
+      _syncControllersAfterUpdate(updated);
+      _showSnackBar('MBTI가 업데이트되었습니다!');
+    } catch (error) {
+      if (!mounted) return;
+      _showSnackBar('MBTI 업데이트에 실패했습니다: $error', isError: true);
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _savingMbit = false;
       });
     }
   }
@@ -162,11 +321,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final user = AuthService.currentUser;
     if (user == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('로그인 정보가 없어 프로필 사진을 변경할 수 없습니다.')),
-        );
-      }
+      _showSnackBar('로그인 정보가 없어 프로필 사진을 변경할 수 없습니다.', isError: true);
       return;
     }
 
@@ -203,21 +358,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _localProfileImageBytes = null;
       });
 
-      if (!_isEditing) {
-        _applyProfileToControllers(profile);
-      }
+      _syncControllersAfterUpdate(profile);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('프로필 사진이 업데이트되었습니다!'),
-          backgroundColor: Color(0xFF87CEEB),
-        ),
-      );
+      _showSnackBar('프로필 사진이 업데이트되었습니다!');
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('프로필 사진을 변경하지 못했습니다: $error')),
-      );
+      _showSnackBar('프로필 사진을 변경하지 못했습니다: $error', isError: true);
       setState(() {
         _localProfileImageBytes = null;
       });
@@ -238,6 +384,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return 'image/jpeg';
   }
 
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.redAccent : const Color(0xFF87CEEB),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget content;
@@ -253,10 +409,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Text(
               _error!,
-              style: const TextStyle(
-                color: Colors.black87,
-                fontSize: 16,
-              ),
+              style: const TextStyle(color: Colors.black87, fontSize: 16),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -280,8 +433,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Row(
-              children: [
-                const Text(
+              children: const [
+                Text(
                   '프로필',
                   style: TextStyle(
                     fontSize: 24,
@@ -290,66 +443,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     letterSpacing: -0.5,
                   ),
                 ),
-                const Spacer(),
-                if (_isEditing)
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: _toggleEditMode,
-                        child: const Text(
-                          '취소',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: _isSaving ? null : _saveChanges,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF87CEEB),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                        ),
-                        child: _isSaving
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              )
-                            : const Text(
-                                '저장',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
-                    ],
-                  )
-                else
-                  IconButton(
-                    onPressed: _profile == null ? null : _toggleEditMode,
-                    icon: const Icon(
-                      Icons.edit_outlined,
-                      color: Color(0xFF87CEEB),
-                      size: 24,
-                    ),
-                  ),
+                Spacer(),
               ],
             ),
           ),
@@ -366,13 +460,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.person_outline,
                     controller: _introductionController,
                     isMultiline: true,
+                    isEditing: _editingSelfIntroduction,
+                    isSaving: _savingSelfIntroduction,
+                    onEdit: _startEditingSelfIntroduction,
+                    onCancel: _cancelEditingSelfIntroduction,
+                    onSave: _saveSelfIntroduction,
                   ),
                   const SizedBox(height: 24),
                   _buildEditableSection(
-                    title: 'MBTI',
-                    icon: Icons.psychology_outlined,
-                    controller: _mbitController,
-                    isMultiline: false,
+                    title: '신앙 고백',
+                    icon: Icons.menu_book_outlined,
+                    controller: _faithConfessionController,
+                    isMultiline: true,
+                    isEditing: _editingFaithConfession,
+                    isSaving: _savingFaithConfession,
+                    onEdit: _startEditingFaithConfession,
+                    onCancel: _cancelEditingFaithConfession,
+                    onSave: _saveFaithConfession,
                   ),
                   const SizedBox(height: 24),
                   _buildEditableSection(
@@ -380,6 +484,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.favorite_outline,
                     controller: _idealTypeController,
                     isMultiline: true,
+                    isEditing: _editingIdealType,
+                    isSaving: _savingIdealType,
+                    onEdit: _startEditingIdealType,
+                    onCancel: _cancelEditingIdealType,
+                    onSave: _saveIdealType,
+                  ),
+                  const SizedBox(height: 24),
+                  _buildEditableSection(
+                    title: 'MBTI',
+                    icon: Icons.psychology_outlined,
+                    controller: _mbitController,
+                    isMultiline: false,
+                    isEditing: _editingMbit,
+                    isSaving: _savingMbit,
+                    onEdit: _startEditingMbit,
+                    onCancel: _cancelEditingMbit,
+                    onSave: _saveMbit,
                   ),
                 ],
               ),
@@ -444,10 +565,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Widget avatarContent;
 
     if (_localProfileImageBytes != null) {
-      avatarContent = Image.memory(
-        _localProfileImageBytes!,
-        fit: BoxFit.cover,
-      );
+      avatarContent = Image.memory(_localProfileImageBytes!, fit: BoxFit.cover);
     } else {
       final imageUrl = _profileImageUrl;
       if (imageUrl != null) {
@@ -476,11 +594,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           ClipRRect(
             borderRadius: borderRadius,
-            child: SizedBox(
-              width: 80,
-              height: 80,
-              child: avatarContent,
-            ),
+            child: SizedBox(width: 80, height: 80, child: avatarContent),
           ),
           Positioned(
             bottom: 4,
@@ -501,9 +615,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Icon(
                 Icons.camera_alt_outlined,
                 size: 16,
-                color: _isUploadingPhoto
-                    ? Colors.grey
-                    : const Color(0xFF87CEEB),
+                color:
+                    _isUploadingPhoto ? Colors.grey : const Color(0xFF87CEEB),
               ),
             ),
           ),
@@ -533,11 +646,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildAvatarPlaceholder() {
     return const Center(
-      child: Icon(
-        Icons.person,
-        color: Color(0xFF87CEEB),
-        size: 40,
-      ),
+      child: Icon(Icons.person, color: Color(0xFF87CEEB), size: 40),
     );
   }
 
@@ -546,6 +655,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required IconData icon,
     required TextEditingController controller,
     required bool isMultiline,
+    required bool isEditing,
+    required bool isSaving,
+    required VoidCallback onEdit,
+    required VoidCallback onCancel,
+    required Future<void> Function() onSave,
   }) {
     final hasContent = controller.text.trim().isNotEmpty;
 
@@ -556,7 +670,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _isEditing
+          color: isEditing
               ? const Color(0xFF87CEEB).withOpacity(0.3)
               : Colors.grey.withOpacity(0.15),
           width: 1,
@@ -583,24 +697,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Icon(icon, size: 20, color: const Color(0xFF87CEEB)),
               ),
               const SizedBox(width: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
-              const Spacer(),
-              if (_isEditing)
-                Icon(Icons.edit, size: 16, color: Colors.grey[600]),
+              if (!isEditing)
+                IconButton(
+                  onPressed: (_isLoading || isSaving) ? null : onEdit,
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    color: Color(0xFF87CEEB),
+                    size: 20,
+                  ),
+                )
+              else
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton(
+                      onPressed: isSaving ? null : onCancel,
+                      child: const Text(
+                        '취소',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: isSaving
+                          ? null
+                          : () async {
+                              await onSave();
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF87CEEB),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                      ),
+                      child: isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              '저장',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
             ],
           ),
           const SizedBox(height: 16),
-          if (_isEditing)
+          if (isEditing)
             TextField(
               controller: controller,
-              maxLines: isMultiline ? 4 : 1,
+              maxLines: isMultiline ? 5 : 1,
               decoration: InputDecoration(
                 hintText: '${title}을 입력해주세요',
                 border: OutlineInputBorder(
@@ -628,7 +805,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: hasContent ? Colors.black87 : Colors.grey,
                 height: isMultiline ? 1.6 : 1.2,
                 fontWeight:
-                    hasContent ? (isMultiline ? FontWeight.w400 : FontWeight.w600) : FontWeight.w400,
+                    hasContent
+                        ? (isMultiline ? FontWeight.w400 : FontWeight.w600)
+                        : FontWeight.w400,
               ),
             ),
         ],
