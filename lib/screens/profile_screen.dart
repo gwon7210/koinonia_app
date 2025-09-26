@@ -15,6 +15,14 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  static const Color _backgroundColor = Color(0xFFF2F2F7);
+  static const Color _cardColor = Color(0xFFFFFFFF);
+  static const Color _primaryColor = Color(0xFF0A84FF);
+  static const Color _iconBackgroundColor = Color(0xFFE5E5EA);
+  static const Color _labelColor = Color(0xFF1C1C1E);
+  static const Color _secondaryTextColor = Color(0xFF8E8E93);
+  static const Color _dividerColor = Color(0xFFE5E5EA);
+
   UserProfile? _profile;
   bool _isLoading = false;
   bool _isUploadingPhoto = false;
@@ -410,7 +418,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     messenger.showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.redAccent : const Color(0xFF87CEEB),
+        backgroundColor: isError ? Colors.redAccent : _primaryColor,
       ),
     );
   }
@@ -421,7 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (_isLoading) {
       content = const Center(
-        child: CircularProgressIndicator(color: Color(0xFF87CEEB)),
+        child: CircularProgressIndicator(color: _primaryColor),
       );
     } else if (_error != null) {
       content = Center(
@@ -434,13 +442,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
+            FilledButton(
               onPressed: _loadProfile,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF87CEEB),
+              style: FilledButton.styleFrom(
+                backgroundColor: _primaryColor,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: const Text('다시 시도'),
@@ -476,41 +484,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   _buildProfileHeader(),
                   const SizedBox(height: 32),
-                  _buildEditableSection(
-                    title: '자기소개',
-                    icon: Icons.person_outline,
-                    controller: _introductionController,
-                    isMultiline: true,
-                    isEditing: _editingSelfIntroduction,
-                    isSaving: _savingSelfIntroduction,
-                    onEdit: _startEditingSelfIntroduction,
-                    onCancel: _cancelEditingSelfIntroduction,
-                    onSave: _saveSelfIntroduction,
-                  ),
-                  const SizedBox(height: 24),
-                  _buildEditableSection(
-                    title: '신앙 고백',
-                    icon: Icons.menu_book_outlined,
-                    controller: _faithConfessionController,
-                    isMultiline: true,
-                    isEditing: _editingFaithConfession,
-                    isSaving: _savingFaithConfession,
-                    onEdit: _startEditingFaithConfession,
-                    onCancel: _cancelEditingFaithConfession,
-                    onSave: _saveFaithConfession,
-                  ),
-                  const SizedBox(height: 24),
-                  _buildEditableSection(
-                    title: '이상형',
-                    icon: Icons.favorite_outline,
-                    controller: _idealTypeController,
-                    isMultiline: true,
-                    isEditing: _editingIdealType,
-                    isSaving: _savingIdealType,
-                    onEdit: _startEditingIdealType,
-                    onCancel: _cancelEditingIdealType,
-                    onSave: _saveIdealType,
-                  ),
+                  _buildNarrativeSectionGroup(),
                   const SizedBox(height: 24),
                   _buildEditableSection(
                     title: 'MBTI',
@@ -534,21 +508,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _backgroundColor,
       body: SafeArea(child: content),
     );
   }
 
   Widget _buildProfileHeader() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       decoration: BoxDecoration(
-        color: const Color(0xFF87CEEB).withOpacity(0.05),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF87CEEB).withOpacity(0.2),
-          width: 1,
-        ),
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         children: [
@@ -561,17 +531,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const Text(
                   '내 프로필',
                   style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black87,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: _labelColor,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   AuthService.currentUser?.kakaoId ?? '로그인 정보를 확인할 수 없어요',
                   style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
+                    fontSize: 15,
+                    color: _secondaryTextColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -612,7 +582,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             height: 80,
             decoration: BoxDecoration(
               borderRadius: borderRadius,
-              color: const Color(0xFF87CEEB).withOpacity(0.2),
+              color: _iconBackgroundColor,
             ),
           ),
           ClipRRect(
@@ -638,8 +608,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Icon(
                 Icons.camera_alt_outlined,
                 size: 16,
-                color:
-                    _isUploadingPhoto ? Colors.grey : const Color(0xFF87CEEB),
+                color: _isUploadingPhoto ? Colors.grey : _primaryColor,
               ),
             ),
           ),
@@ -669,7 +638,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildAvatarPlaceholder() {
     return const Center(
-      child: Icon(Icons.person, color: Color(0xFF87CEEB), size: 40),
+      child: Icon(Icons.person, color: _secondaryTextColor, size: 32),
     );
   }
 
@@ -682,8 +651,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildMbitEditor() {
     final selected = _mbitEditingValue;
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 6,
+      runSpacing: 6,
       children: _mbtiOptions
           .map(
             (value) => ChoiceChip(
@@ -699,11 +668,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _mbitController.text = value;
                           });
                         },
-              selectedColor: const Color(0xFF87CEEB),
+              selectedColor: _primaryColor,
+              backgroundColor: _iconBackgroundColor,
               labelStyle: TextStyle(
                 color: value == selected ? Colors.white : Colors.black87,
                 fontWeight: FontWeight.w600,
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             ),
           )
           .toList(growable: false),
@@ -728,8 +699,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
-        backgroundColor: const Color(0xFF87CEEB).withOpacity(0.15),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        backgroundColor: _primaryColor.withOpacity(0.18),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       ),
     );
   }
@@ -746,160 +717,224 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required Future<void> Function() onSave,
     Widget? editingChild,
     Widget? viewChild,
+    bool useCard = true,
+    EdgeInsetsGeometry? padding,
   }) {
     final hasContent = controller.text.trim().isNotEmpty;
+    final resolvedPadding = padding ??
+        const EdgeInsets.symmetric(horizontal: 20, vertical: 16);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isEditing
-              ? const Color(0xFF87CEEB).withOpacity(0.3)
-              : Colors.grey.withOpacity(0.15),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+    Widget editor = editingChild ??
+        TextField(
+          controller: controller,
+          maxLines: isMultiline ? 5 : 1,
+          decoration: InputDecoration(
+            hintText: '${title}을 입력해주세요',
+            filled: true,
+            fillColor: _backgroundColor,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
           ),
-        ],
-      ),
+        );
+
+    final body = Padding(
+      padding: resolvedPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF87CEEB).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: _iconBackgroundColor,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, size: 20, color: const Color(0xFF87CEEB)),
+                child: Icon(icon, size: 18, color: _primaryColor),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: _labelColor,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    isEditing
+                        ? editor
+                        : (viewChild ??
+                            Text(
+                              hasContent
+                                  ? controller.text
+                                  : '등록된 정보가 없습니다.',
+                              style: TextStyle(
+                                fontSize: isMultiline ? 15 : 16,
+                                color: hasContent
+                                    ? _labelColor
+                                    : _secondaryTextColor,
+                                height: isMultiline ? 1.6 : 1.3,
+                                fontWeight: hasContent
+                                    ? FontWeight.w500
+                                    : FontWeight.w400,
+                              ),
+                            )),
+                  ],
                 ),
               ),
               if (!isEditing)
                 IconButton(
                   onPressed: (_isLoading || isSaving) ? null : onEdit,
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.edit_outlined,
-                    color: Color(0xFF87CEEB),
-                    size: 20,
+                    color:
+                        (_isLoading || isSaving) ? _secondaryTextColor : _primaryColor,
+                    size: 18,
                   ),
-                )
-              else
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextButton(
-                      onPressed: isSaving ? null : onCancel,
-                      child: const Text(
-                        '취소',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: isSaving
-                          ? null
-                          : () async {
-                              await onSave();
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF87CEEB),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                      ),
-                      child: isSaving
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                          : const Text(
-                              '저장',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                    ),
-                  ],
                 ),
             ],
           ),
-          const SizedBox(height: 16),
-          if (isEditing)
-            editingChild ??
-                TextField(
-                  controller: controller,
-                  maxLines: isMultiline ? 5 : 1,
-                  decoration: InputDecoration(
-                    hintText: '${title}을 입력해주세요',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF87CEEB),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF87CEEB),
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.all(12),
+          if (isEditing) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                TextButton(
+                  onPressed: isSaving ? null : onCancel,
+                  style: TextButton.styleFrom(
+                    foregroundColor: _secondaryTextColor,
                   ),
-            )
-          else
-            viewChild ??
-                Text(
-                  hasContent ? controller.text : '등록된 정보가 없습니다.',
-                  style: TextStyle(
-                    fontSize: isMultiline ? 15 : 18,
-                    color: hasContent ? Colors.black87 : Colors.grey,
-                    height: isMultiline ? 1.6 : 1.2,
-                    fontWeight:
-                        hasContent
-                            ? (isMultiline ? FontWeight.w400 : FontWeight.w600)
-                            : FontWeight.w400,
-                  ),
+                  child: const Text('취소'),
                 ),
+                const SizedBox(width: 12),
+                FilledButton(
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          await onSave();
+                        },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text('저장'),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
+
+    if (!useCard) {
+      return body;
+    }
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: body,
+    );
+  }
+
+  Widget _buildNarrativeSectionGroup() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 6),
+            child: Text(
+              '서술형 답변',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: _secondaryTextColor,
+                letterSpacing: -0.2,
+              ),
+            ),
+          ),
+          _buildEditableSection(
+            title: '자기소개',
+            icon: Icons.person_outline,
+            controller: _introductionController,
+            isMultiline: true,
+            isEditing: _editingSelfIntroduction,
+            isSaving: _savingSelfIntroduction,
+            onEdit: _startEditingSelfIntroduction,
+            onCancel: _cancelEditingSelfIntroduction,
+            onSave: _saveSelfIntroduction,
+            useCard: false,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          ),
+          _buildSectionDivider(),
+          _buildEditableSection(
+            title: '신앙 고백',
+            icon: Icons.menu_book_outlined,
+            controller: _faithConfessionController,
+            isMultiline: true,
+            isEditing: _editingFaithConfession,
+            isSaving: _savingFaithConfession,
+            onEdit: _startEditingFaithConfession,
+            onCancel: _cancelEditingFaithConfession,
+            onSave: _saveFaithConfession,
+            useCard: false,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          ),
+          _buildSectionDivider(),
+          _buildEditableSection(
+            title: '이상형',
+            icon: Icons.favorite_outline,
+            controller: _idealTypeController,
+            isMultiline: true,
+            isEditing: _editingIdealType,
+            isSaving: _savingIdealType,
+            onEdit: _startEditingIdealType,
+            onCancel: _cancelEditingIdealType,
+            onSave: _saveIdealType,
+            useCard: false,
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionDivider() {
+    return const Divider(height: 1, thickness: 1, color: _dividerColor);
   }
 }
