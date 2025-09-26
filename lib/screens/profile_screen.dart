@@ -15,13 +15,13 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const Color _backgroundColor = Color(0xFFF2F2F7);
-  static const Color _cardColor = Color(0xFFFFFFFF);
-  static const Color _primaryColor = Color(0xFF0A84FF);
-  static const Color _iconBackgroundColor = Color(0xFFE5E5EA);
-  static const Color _labelColor = Color(0xFF1C1C1E);
-  static const Color _secondaryTextColor = Color(0xFF8E8E93);
-  static const Color _dividerColor = Color(0xFFE5E5EA);
+  static const Color _backgroundColor = Colors.white;
+  static const Color _cardColor = Color(0xFFF7FBFF);
+  static const Color _primaryColor = Color(0xFF87CEEB);
+  static const Color _iconBackgroundColor = Color(0xFFE3F2FD);
+  static const Color _labelColor = Color(0xFF102A43);
+  static const Color _secondaryTextColor = Color(0xFF4A5568);
+  static const Color _dividerColor = Color(0xFFE2E8F0);
 
   UserProfile? _profile;
   bool _isLoading = false;
@@ -686,7 +686,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (normalized == null) {
       return const Text(
         '등록된 정보가 없습니다.',
-        style: TextStyle(color: Colors.grey, fontSize: 15, fontWeight: FontWeight.w400),
+        style: TextStyle(color: _secondaryTextColor, fontSize: 15, fontWeight: FontWeight.w400),
       );
     }
     return Align(
