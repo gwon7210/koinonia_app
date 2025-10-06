@@ -45,6 +45,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _editingMbit = false;
   bool _savingMbit = false;
   String? _mbitEditingValue;
+  bool _editingHobbies = false;
+  bool _savingHobbies = false;
+  List<String> _hobbies = [];
+
+  final TextEditingController _hobbyController = TextEditingController();
 
   late TextEditingController _introductionController;
   late TextEditingController _idealTypeController;
@@ -76,6 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _idealTypeController.dispose();
     _mbitController.dispose();
     _faithConfessionController.dispose();
+    _hobbyController.dispose();
     super.dispose();
   }
 
@@ -124,6 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final normalizedMbit = _normalizeMbit(profile?.mbit);
     _mbitController.text = normalizedMbit ?? profile?.mbit ?? '';
     _faithConfessionController.text = profile?.faithConfession ?? '';
+    _hobbies = List<String>.from(profile?.hobbies ?? const []);
   }
 
   void _syncControllersAfterUpdate(UserProfile profile) {
@@ -140,6 +147,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final normalizedMbit = _normalizeMbit(profile.mbit);
       _mbitController.text = normalizedMbit ?? profile.mbit ?? '';
     }
+    if (!_editingHobbies) {
+      _hobbies = List<String>.from(profile.hobbies ?? const []);
+    }
   }
 
   void _resetEditingStates() {
@@ -152,6 +162,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _editingMbit = false;
     _savingMbit = false;
     _mbitEditingValue = null;
+    _editingHobbies = false;
+    _savingHobbies = false;
+    _hobbyController.clear();
   }
 
   void _startEditingSelfIntroduction() {
@@ -339,6 +352,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _startEditingHobbies() {
+    setState(() {
+      _editingHobbies = true;
+      _hobbyController.clear();
+      _hobbies = List<String>.from(_profile?.hobbies ?? _hobbies);
+    });
+  }
+
+  void _cancelEditingHobbies() {
+    setState(() {
+      _editingHobbies = false;
+      _hobbyController.clear();
+      _hobbies = List<String>.from(_profile?.hobbies ?? const []);
+    });
+  }
+
+  void _addHobby() {
+    final value = _hobbyController.text.trim();
+    if (value.isEmpty) return;
+    if (_hobbies.contains(value)) {
+      _showSnackBar('이미 추가된 취미입니다.', isError: true);
+      return;
+    }
+    setState(() {
+      _hobbies = [..._hobbies, value];
+      _hobbyController.clear();
+    });
+  }
+
+  void _removeHobby(String hobby) {
+    setState(() {
+      _hobbies = _hobbies.where((item) => item != hobby).toList();
+    });
+  }
+
+  Future<void> _saveHobbies() async {
+    if (_savingHobbies) return;
+    setState(() {
+      _savingHobbies = true;
+    });
+
+    try {
+      final updated = await ProfileService.updateHobbies(_hobbies);
+
+      if (!mounted) return;
+
+      setState(() {
+        _profile = updated;
+        _localProfileImageBytes = null;
+        _editingHobbies = false;
+        _hobbies = List<String>.from(updated.hobbies ?? const []);
+      });
+      _syncControllersAfterUpdate(updated);
+      _hobbyController.clear();
+      final updatedHobbies = updated.hobbies ?? const [];
+      final hobbiesLabel = updatedHobbies.isEmpty
+          ? '없음'
+          : updatedHobbies.join(', ');
+      _showSnackBar('취미가 업데이트되었습니다: $hobbiesLabel');
+    } catch (error) {
+      if (!mounted) return;
+      _showSnackBar('취미 업데이트에 실패했습니다: $error', isError: true);
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _savingHobbies = false;
+      });
+    }
+  }
+
   Future<void> _pickProfileImage() async {
     if (_isUploadingPhoto || _isLoading) {
       return;
@@ -499,6 +582,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     editingChild: _buildMbitEditor(),
                     viewChild: _buildMbitView(),
                   ),
+                  const SizedBox(height: 24),
+                  _buildHobbiesSection(),
                 ],
               ),
             ),
@@ -702,6 +787,105 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: _primaryColor.withOpacity(0.18),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       ),
+    );
+  }
+
+  Widget _buildHobbiesSection() {
+    return _buildEditableSection(
+      title: '취미',
+      icon: Icons.interests_outlined,
+      controller: _hobbyController,
+      isMultiline: false,
+      isEditing: _editingHobbies,
+      isSaving: _savingHobbies,
+      onEdit: _startEditingHobbies,
+      onCancel: _cancelEditingHobbies,
+      onSave: _saveHobbies,
+      editingChild: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _hobbyController,
+                  decoration: const InputDecoration(
+                    hintText: '취미를 입력하고 + 버튼을 눌러 추가하세요',
+                    filled: true,
+                    fillColor: Color(0xFFF1F5F9),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        bottomLeft: Radius.circular(12),
+                      ),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onSubmitted: (_) => _addHobby(),
+                ),
+              ),
+              Container(
+                decoration: const BoxDecoration(
+                  color: _primaryColor,
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
+                  ),
+                ),
+                child: IconButton(
+                  onPressed: _savingHobbies
+                      ? null
+                      : () {
+                          _addHobby();
+                        },
+                  icon: const Icon(Icons.add, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildHobbyChips(editable: true),
+        ],
+      ),
+      viewChild: _buildHobbyChips(editable: false),
+    );
+  }
+
+  Widget _buildHobbyChips({required bool editable}) {
+    if (_hobbies.isEmpty) {
+      return const Text(
+        '등록된 취미가 없습니다.',
+        style: TextStyle(color: _secondaryTextColor, fontSize: 15, fontWeight: FontWeight.w400),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _hobbies
+          .map(
+            (hobby) => Chip(
+              label: Text(
+                hobby,
+                style: const TextStyle(
+                  color: Color(0xFF0F4C75),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              backgroundColor: _iconBackgroundColor,
+              deleteIcon: editable
+                  ? const Icon(
+                      Icons.remove_circle_outline,
+                      size: 18,
+                      color: Color(0xFFBF1650),
+                    )
+                  : null,
+              onDeleted: editable ? () => _removeHobby(hobby) : null,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            ),
+          )
+          .toList(),
     );
   }
 

@@ -6,6 +6,7 @@ class UserProfile {
   final String? idealType;
   final String? profileImagePath;
   final String? faithConfession;
+  final List<String>? hobbies;
 
   const UserProfile({
     this.id,
@@ -15,6 +16,7 @@ class UserProfile {
     this.idealType,
     this.profileImagePath,
     this.faithConfession,
+    this.hobbies,
   });
 
   UserProfile copyWith({
@@ -23,6 +25,7 @@ class UserProfile {
     String? idealType,
     String? profileImagePath,
     String? faithConfession,
+    List<String>? hobbies,
   }) {
     return UserProfile(
       id: id,
@@ -32,6 +35,7 @@ class UserProfile {
       idealType: idealType ?? this.idealType,
       profileImagePath: profileImagePath ?? this.profileImagePath,
       faithConfession: faithConfession ?? this.faithConfession,
+      hobbies: hobbies ?? this.hobbies,
     );
   }
 
@@ -44,6 +48,8 @@ class UserProfile {
       idealType: json['idealType'] as String?,
       profileImagePath: json['profileImagePath'] as String?,
       faithConfession: json['faithConfession'] as String?,
+      hobbies:
+          (json['hobbies'] as List?)?.whereType<String>().map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
     );
   }
 
@@ -55,6 +61,7 @@ class UserProfile {
       if (idealType != null) 'idealType': idealType,
       if (profileImagePath != null) 'profileImagePath': profileImagePath,
       if (faithConfession != null) 'faithConfession': faithConfession,
+      if (hobbies != null) 'hobbies': hobbies,
     };
   }
 }

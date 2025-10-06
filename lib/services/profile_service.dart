@@ -43,6 +43,7 @@ class ProfileService {
     String? mbit,
     String? idealType,
     String? faithConfession,
+    List<String>? hobbies,
   }) async {
     final uri = Uri.parse('${AuthService.baseUrl}$_profilePath');
     final body = <String, dynamic>{};
@@ -58,6 +59,9 @@ class ProfileService {
     }
     if (faithConfession != null) {
       body['faithConfession'] = faithConfession;
+    }
+    if (hobbies != null) {
+      body['hobbies'] = hobbies;
     }
 
     final response = await ApiClient.post(
@@ -139,6 +143,13 @@ class ProfileService {
     return _patchProfile(
       '/users/profile/faith-confession',
       {'faithConfession': faithConfession},
+    );
+  }
+
+  static Future<UserProfile> updateHobbies(List<String> hobbies) {
+    return _patchProfile(
+      '/users/profile/hobbies',
+      {'hobbies': hobbies},
     );
   }
 
