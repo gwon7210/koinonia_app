@@ -1,14 +1,34 @@
 import 'package:flutter/material.dart';
 import '../models/profile.dart';
+import '../services/user_search_service.dart';
 import 'profile_detail_screen.dart';
 
-class ProfileSearchScreen extends StatelessWidget {
+class ProfileSearchScreen extends StatefulWidget {
   const ProfileSearchScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final profiles = MockProfiles.getMockProfiles();
+  State<ProfileSearchScreen> createState() => _ProfileSearchScreenState();
+}
 
+class _ProfileSearchScreenState extends State<ProfileSearchScreen> {
+  late Future<List<Profile>> _profilesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _profilesFuture = UserSearchService.fetchProfiles();
+  }
+
+  Future<void> _refreshProfiles() async {
+    final nextFuture = UserSearchService.fetchProfiles();
+    setState(() {
+      _profilesFuture = nextFuture;
+    });
+    await nextFuture;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -42,13 +62,34 @@ class ProfileSearchScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 프로필 목록
               Expanded(
-                child: ListView.builder(
-                  itemCount: profiles.length,
-                  itemBuilder: (context, index) {
-                    final profile = profiles[index];
-                    return _buildProfileCard(profile, context);
+                child: FutureBuilder<List<Profile>>(
+                  future: _profilesFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError) {
+                      return _buildErrorView(snapshot.error);
+                    }
+
+                    final profiles = snapshot.data ?? const <Profile>[];
+                    if (profiles.isEmpty) {
+                      return _buildEmptyView();
+                    }
+
+                    return RefreshIndicator(
+                      onRefresh: _refreshProfiles,
+                      child: ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: profiles.length,
+                        itemBuilder: (context, index) {
+                          final profile = profiles[index];
+                          return _buildProfileCard(profile, context);
+                        },
+                      ),
+                    );
                   },
                 ),
               ),
@@ -113,7 +154,7 @@ class ProfileSearchScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${profile.age}세 • ${profile.occupation}',
+                        _buildBasicInfo(profile),
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -128,47 +169,51 @@ class ProfileSearchScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // 자기소개
-            Text(
-              profile.introduction,
-              style: const TextStyle(
-                fontSize: 15,
-                color: Colors.black87,
-                height: 1.5,
+            if ((profile.introduction ?? '').isNotEmpty) ...[
+              Text(
+                profile.introduction!,
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: Colors.black87,
+                  height: 1.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
+            ],
 
             // 취미
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children:
-                  profile.hobbies.map((hobby) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF87CEEB).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0xFF87CEEB).withOpacity(0.3),
-                          width: 1,
+            if (profile.hobbies.isNotEmpty) ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children:
+                    profile.hobbies.map((hobby) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
                         ),
-                      ),
-                      child: Text(
-                        hobby,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF87CEEB),
-                          fontWeight: FontWeight.w600,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF87CEEB).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFF87CEEB).withOpacity(0.3),
+                            width: 1,
+                          ),
                         ),
-                      ),
-                    );
-                  }).toList(),
-            ),
-            const SizedBox(height: 20),
+                        child: Text(
+                          hobby,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF87CEEB),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+              ),
+              const SizedBox(height: 20),
+            ],
 
             // 액션 버튼
             SizedBox(
@@ -196,6 +241,20 @@ class ProfileSearchScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _buildBasicInfo(Profile profile) {
+    final parts = <String>[];
+    if (profile.age.isNotEmpty && profile.age != '-') {
+      parts.add(profile.age);
+    }
+    if (profile.occupation.isNotEmpty) {
+      parts.add(profile.occupation);
+    }
+    if (parts.isEmpty) {
+      return '-';
+    }
+    return parts.join(' • ');
   }
 
   void _showTokenConfirmDialog(BuildContext context, Profile profile) {
@@ -326,6 +385,72 @@ class ProfileSearchScreen extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildErrorView(Object? error) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.redAccent, size: 32),
+          const SizedBox(height: 12),
+          const Text(
+            '프로필을 불러오지 못했어요.',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error?.toString() ?? '알 수 없는 오류가 발생했습니다.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _refreshProfiles,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF87CEEB),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('다시 시도'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyView() {
+    return RefreshIndicator(
+      onRefresh: _refreshProfiles,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: const [
+          SizedBox(height: 120),
+          Icon(Icons.search_off, size: 48, color: Colors.grey),
+          SizedBox(height: 12),
+          Center(
+            child: Text(
+              '추천할 프로필이 없어요.',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          SizedBox(height: 8),
+          Center(
+            child: Text(
+              '새로운 추천이 생기면 알려드릴게요!',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -56,7 +56,7 @@ class ProfileDetailScreen extends StatelessWidget {
                   _buildSection(
                     title: '자기소개',
                     icon: Icons.person_outline,
-                    content: profile.detailedIntroduction,
+                    content: profile.detailedIntroduction ?? '',
                   ),
                   const SizedBox(height: 32),
 
@@ -64,7 +64,7 @@ class ProfileDetailScreen extends StatelessWidget {
                   _buildSection(
                     title: 'MBTI',
                     icon: Icons.psychology_outlined,
-                    content: profile.mbti,
+                    content: profile.mbti ?? '',
                     isShort: true,
                   ),
                   const SizedBox(height: 32),
@@ -73,9 +73,18 @@ class ProfileDetailScreen extends StatelessWidget {
                   _buildSection(
                     title: '이상형',
                     icon: Icons.favorite_outline,
-                    content: profile.idealType,
+                    content: profile.idealType ?? '',
                   ),
                   const SizedBox(height: 20),
+
+                  if ((profile.faithConfession ?? '').isNotEmpty) ...[
+                    _buildSection(
+                      title: '신앙고백',
+                      icon: Icons.church_outlined,
+                      content: profile.faithConfession!,
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                 ],
               ),
             ),
@@ -141,7 +150,7 @@ class ProfileDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${profile.age}세 • ${profile.occupation}',
+                  _buildBasicInfoLine(),
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey[600],
@@ -151,31 +160,32 @@ class ProfileDetailScreen extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // 취미 태그들
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children:
-                      profile.hobbies.map((hobby) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF87CEEB).withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            hobby,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF87CEEB),
-                              fontWeight: FontWeight.w600,
+                if (profile.hobbies.isNotEmpty)
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children:
+                        profile.hobbies.map((hobby) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
                             ),
-                          ),
-                        );
-                      }).toList(),
-                ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF87CEEB).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              hobby,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF87CEEB),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                  ),
               ],
             ),
           ),
@@ -233,18 +243,33 @@ class ProfileDetailScreen extends StatelessWidget {
           const SizedBox(height: 16),
 
           // 내용
-          Text(
-            content,
-            style: TextStyle(
-              fontSize: isShort ? 20 : 15,
-              color: Colors.black87,
-              height: 1.6,
-              fontWeight: isShort ? FontWeight.w700 : FontWeight.w400,
+          if (content.isNotEmpty)
+            Text(
+              content,
+              style: TextStyle(
+                fontSize: isShort ? 20 : 15,
+                color: Colors.black87,
+                height: 1.6,
+                fontWeight: isShort ? FontWeight.w700 : FontWeight.w400,
+              ),
             ),
-          ),
         ],
       ),
     );
+  }
+
+  String _buildBasicInfoLine() {
+    final parts = <String>[];
+    if (profile.age.isNotEmpty && profile.age != '-') {
+      parts.add(profile.age);
+    }
+    if (profile.occupation.isNotEmpty) {
+      parts.add(profile.occupation);
+    }
+    if (parts.isEmpty) {
+      return '-';
+    }
+    return parts.join(' • ');
   }
 
   Widget _buildActionButton(BuildContext context) {
