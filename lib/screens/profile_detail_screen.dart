@@ -141,15 +141,7 @@ class ProfileDetailScreen extends StatelessWidget {
       child: Row(
         children: [
           // 프로필 이미지
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(50),
-              color: const Color(0xFF87CEEB).withOpacity(0.2),
-            ),
-            child: const Icon(Icons.person, size: 50, color: Color(0xFF87CEEB)),
-          ),
+          _buildProfileAvatar(),
           const SizedBox(width: 20),
 
           // 기본 정보
@@ -182,6 +174,42 @@ class ProfileDetailScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProfileAvatar() {
+    const placeholderColor = Color(0xFF87CEEB);
+    final fallback = Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        color: placeholderColor.withOpacity(0.2),
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(Icons.person, size: 50, color: placeholderColor),
+    );
+
+    final imageUrl = profile.imageUrl;
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return fallback;
+    }
+
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: const BoxDecoration(shape: BoxShape.circle),
+      clipBehavior: Clip.antiAlias,
+      child: Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => fallback,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) {
+            return child;
+          }
+          return fallback;
+        },
       ),
     );
   }

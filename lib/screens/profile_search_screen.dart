@@ -129,19 +129,7 @@ class _ProfileSearchScreenState extends State<ProfileSearchScreen> {
             Row(
               children: [
                 // 프로필 이미지
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(40),
-                    color: const Color(0xFF87CEEB).withOpacity(0.2),
-                  ),
-                  child: const Icon(
-                    Icons.person,
-                    size: 40,
-                    color: Color(0xFF87CEEB),
-                  ),
-                ),
+                _buildProfileAvatar(profile.imageUrl),
                 const SizedBox(width: 16),
 
                 // 기본 정보
@@ -247,6 +235,22 @@ class _ProfileSearchScreenState extends State<ProfileSearchScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildProfileAvatar(String? imageUrl) {
+    const placeholderColor = Color(0xFF87CEEB);
+    final fallback = Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: placeholderColor.withOpacity(0.2),
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(Icons.person, size: 40, color: placeholderColor),
+    );
+
+    // 추천 프로필 단계에서는 이미지가 있어도 노출하지 않는다.
+    return fallback;
   }
 
   String _buildBasicInfo(Profile profile) {
