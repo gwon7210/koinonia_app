@@ -60,30 +60,19 @@ class ProfileDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  // MBTI
-                  _buildSection(
-                    title: 'MBTI',
-                    icon: Icons.psychology_outlined,
-                    content: profile.mbti ?? '',
-                    isShort: true,
-                  ),
-                  const SizedBox(height: 32),
-
                   // 이상형
                   _buildSection(
                     title: '이상형',
                     icon: Icons.favorite_outline,
                     content: profile.idealType ?? '',
                   ),
-                  const SizedBox(height: 20),
-
                   if ((profile.faithConfession ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 32),
                     _buildSection(
                       title: '신앙고백',
                       icon: Icons.church_outlined,
                       content: profile.faithConfession!,
                     ),
-                    const SizedBox(height: 20),
                   ],
                 ],
               ),
@@ -111,6 +100,34 @@ class ProfileDetailScreen extends StatelessWidget {
   }
 
   Widget _buildProfileHeader() {
+    final tags = <String>[
+      ...profile.hobbies,
+      if ((profile.mbti ?? '').trim().isNotEmpty) profile.mbti!.trim(),
+    ];
+    final tagWidgets =
+        tags
+            .map(
+              (tag) => Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF87CEEB).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  tag,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF87CEEB),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            )
+            .toList();
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -157,35 +174,10 @@ class ProfileDetailScreen extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 12),
-
-                // 취미 태그들
-                if (profile.hobbies.isNotEmpty)
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children:
-                        profile.hobbies.map((hobby) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF87CEEB).withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              hobby,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF87CEEB),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                  ),
+                if (tagWidgets.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Wrap(spacing: 6, runSpacing: 6, children: tagWidgets),
+                ],
               ],
             ),
           ),

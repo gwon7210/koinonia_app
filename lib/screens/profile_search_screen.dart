@@ -101,6 +101,11 @@ class _ProfileSearchScreenState extends State<ProfileSearchScreen> {
   }
 
   Widget _buildProfileCard(Profile profile, BuildContext context) {
+    final tags = <String>[
+      ...profile.hobbies,
+      if ((profile.mbti ?? '').trim().isNotEmpty) profile.mbti!.trim(),
+    ];
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -180,37 +185,38 @@ class _ProfileSearchScreenState extends State<ProfileSearchScreen> {
               ),
               const SizedBox(height: 16),
             ],
-
-            // 취미
-            if (profile.hobbies.isNotEmpty) ...[
+            // 취미 및 MBTI 태그
+            if (tags.isNotEmpty) ...[
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children:
-                    profile.hobbies.map((hobby) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF87CEEB).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: const Color(0xFF87CEEB).withOpacity(0.3),
-                            width: 1,
+                    tags
+                        .map(
+                          (tag) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF87CEEB).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFF87CEEB).withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              tag,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF87CEEB),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          hobby,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF87CEEB),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                        )
+                        .toList(),
               ),
               const SizedBox(height: 20),
             ],
@@ -332,7 +338,7 @@ class _ProfileSearchScreenState extends State<ProfileSearchScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                '상세 프로필에서는 자세한 자기소개, MBTI, 이상형 등을 확인할 수 있어요.',
+                '상세 프로필에서는 자세한 자기소개와 태그, 이상형 등을 확인할 수 있어요.',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
