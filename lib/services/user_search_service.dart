@@ -50,6 +50,7 @@ class UserSearchService {
     final faithConfession = (profileJson['faithConfession'] as String?)?.trim();
     final mbti = (profileJson['mbti'] as String?)?.trim();
     final imagePath = (profileJson['profileImagePath'] as String?)?.trim();
+    final heightRaw = profileJson['height'];
     final hobbies =
         (profileJson['hobbies'] as List?)
             ?.whereType<String>()
@@ -77,6 +78,7 @@ class UserSearchService {
       idealType: idealType?.isNotEmpty == true ? idealType : null,
       faithConfession:
           faithConfession?.isNotEmpty == true ? faithConfession : null,
+      height: _parseHeight(heightRaw),
     );
   }
 
@@ -90,5 +92,18 @@ class UserSearchService {
     } catch (_) {
       return birthDate.length >= 4 ? birthDate.substring(0, 4) : '-';
     }
+  }
+
+  static String? _parseHeight(dynamic rawHeight) {
+    if (rawHeight == null) {
+      return null;
+    }
+
+    final value = rawHeight.toString().trim();
+    if (value.isEmpty) {
+      return null;
+    }
+
+    return value;
   }
 }

@@ -13,7 +13,7 @@ class AppConfig {
           ? AppEnvironment.prod
           : AppEnvironment.dev;
 
-  static const String _devApiBaseUrl = 'http://192.168.0.187:3000/api';
+  static const String _devApiBaseUrl = 'http://192.168.60.187:3000/api';
   static const String _prodApiBaseUrl = 'https://api.koinonia.app/api';
 
   static String get apiBaseUrl => String.fromEnvironment(

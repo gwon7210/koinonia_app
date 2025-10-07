@@ -10,6 +10,7 @@ class Profile {
   final String? mbti;
   final String? idealType;
   final String? faithConfession;
+  final String? height;
 
   const Profile({
     required this.id,
@@ -23,5 +24,6 @@ class Profile {
     this.mbti,
     this.idealType,
     this.faithConfession,
+    this.height,
   });
 }

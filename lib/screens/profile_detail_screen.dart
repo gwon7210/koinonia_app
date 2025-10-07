@@ -100,10 +100,15 @@ class ProfileDetailScreen extends StatelessWidget {
   }
 
   Widget _buildProfileHeader() {
-    final tags = <String>[
-      ...profile.hobbies,
-      if ((profile.mbti ?? '').trim().isNotEmpty) profile.mbti!.trim(),
-    ];
+    final tags = <String>[...profile.hobbies];
+    final mbtiTag = (profile.mbti ?? '').trim();
+    if (mbtiTag.isNotEmpty) {
+      tags.add(mbtiTag);
+    }
+    final heightTag = _buildHeightTag(profile.height);
+    if (heightTag != null) {
+      tags.add(heightTag);
+    }
     final tagWidgets =
         tags
             .map(
@@ -176,6 +181,30 @@ class ProfileDetailScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String? _buildHeightTag(String? height) {
+    final value = height?.trim();
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+
+    final match = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(value);
+    if (match != null) {
+      final numberStr = match.group(0)!;
+      final parsed = double.tryParse(numberStr);
+      if (parsed != null) {
+        return parsed % 1 == 0 ? parsed.toInt().toString() : parsed.toString();
+      }
+      return numberStr;
+    }
+
+    final parsed = double.tryParse(value);
+    if (parsed != null) {
+      return parsed % 1 == 0 ? parsed.toInt().toString() : parsed.toString();
+    }
+
+    return null;
   }
 
   Widget _buildProfileAvatar() {
